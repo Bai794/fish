@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "array": "cpp",
+        "deque": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "initializer_list": "cpp",
+        "*.tcc": "cpp",
+        "regex": "cpp",
+        "functional": "cpp"
+    },
+    "EIDE.SerialPortMonitor.BaudRate": 9600,
+    "commentTranslate.targetLanguage": "en"
+}
