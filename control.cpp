@@ -1,7 +1,7 @@
 /*** 
  * @Author: HideMe
  * @Date: 2021-11-28 21:04:32
- * @LastEditTime: 2021-11-30 12:12:58
+ * @LastEditTime: 2021-11-30 12:53:00
  * @LastEditors: your name
  * @Description: 
  * @FilePath: \fish\control.cpp
@@ -128,4 +128,5 @@ void one_action()
     float two_hcl = control_ph(set_ph);
     float multiple = (user_tagart - two_hcl) / (two_hcl - one_hcl);
     add_nahco3(user_Nahco3 * multiple);
+     wash_Cup();
 }
