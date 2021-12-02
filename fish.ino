@@ -1,7 +1,7 @@
 /*
    @Author: HideMe
    @Date: 2021-10-31 22:04:43
- * @LastEditTime: 2021-11-30 12:11:07
+ * @LastEditTime: 2021-11-30 19:47:23
  * @LastEditors: your name
    @Description:
  * @FilePath: \fish\fish.ino
@@ -33,7 +33,7 @@ extern SYSTEMTIME DS1302Buffer; //
 mystepper stepper1(step1, dir1);
 mystepper stepper2(step2, dir2);
 mystepper stepper3(step3, dir3);
-
+String comand;
 AsyncWebServer server(80); //
 float RedPh_value();
 String mytime = "set 21 11 27 6 19 32"; //To Set The Time As 2008-8-8 Monday 12:00
@@ -51,22 +51,22 @@ void setup()
   ledcSetup(moter2, freq_PWM, resolution_PWM);
   ledcAttachPin(pwma, moter1);
   ledcAttachPin(pwmb, moter2);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(ssid);
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(200, "text/plain", "ip �����һ��??/update ��ʵ��ota����"); });
-
-  AsyncElegantOTA.begin(&server); // Start ElegantOTA
-  server.begin();
-  Serial.println("HTTP server started");
+//  while (WiFi.status() != WL_CONNECTED)
+//  {
+//    delay(500);
+//    Serial.print(".");
+//  }
+//  Serial.println("");
+//  Serial.print("Connected to ");
+//  Serial.println(ssid);
+//  Serial.print("IP address: ");
+//  Serial.println(WiFi.localIP());
+//  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+//            { request->send(200, "text/plain", "ip �����һ��??/update ��ʵ��ota����"); });
+//
+//  AsyncElegantOTA.begin(&server); // Start ElegantOTA
+//  server.begin();
+//  Serial.println("HTTP server started");
 
   DS1302_Init();
   // Set_Time(mytime);
@@ -77,8 +77,20 @@ void setup()
 }
 void loop()
 {
-
-  AsyncElegantOTA.loop();
+  float num=0;
+  while(Serial.available()){
+    comand+=char(Serial.read());
+    delay(2);
+  }
+  if(comand.length()>0){
+    num=comand.toFloat();
+    comand="";
+    Serial.println(num);
+    stepper1.stepnum_turns(3);
+    stepper1.update();
+  }
+  testroundrects();
+//  AsyncElegantOTA.loop();
   Serial.println("hello baiyong");
   //  stepper1.stepnum_turns(3);
   //  stepper2.stepnum_turns(3);
@@ -86,14 +98,14 @@ void loop()
   //  stepper1.update();
   //  stepper2.update();
   //  stepper3.update();
-  testroundrects();
-  Display_RTCC();
-  int num = key_scan();
-  Serial.println(num);
-  float ph_val = RedPh_value();
-  Serial.print("ph_val:");
-  Serial.println(ph_val);
-  delay(500);
+//  testroundrects();
+//  Display_RTCC();
+//  int num = key_scan();
+//  Serial.println(num);
+//  float ph_val = RedPh_value();
+//  Serial.print("ph_val:");
+//  Serial.println(ph_val);
+//  delay(500);
 }
 /**
    @description: ��ȡPHֵ
@@ -128,7 +140,7 @@ float RedPh_value()
   return phValue;
 }
 /**
-   @description: ����������ˮ���??
+   @description: ����������ˮ���??
    @function:
    @param {int} M
    @param {int} speed
