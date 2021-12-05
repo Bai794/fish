@@ -19,8 +19,8 @@ u8 DFT_SCAN_DIR;
 //////////////////////////////////////////////////////////////////////////////////
 
 // LCD的画笔颜色和背景色
-u16 POINT_COLOR = 0x0000; //画笔颜色
-u16 BACK_COLOR = 0xFFFF;  //背景色
+u16 POINT_COLOR = 0xffff; //画笔颜色
+u16 BACK_COLOR = 0x0000;  //背景色
 
 //管理LCD重要参数
 //默认为竖屏
@@ -354,6 +354,7 @@ void LCD_Clear(u16 color)
     LCD_WR_DATA(color);
   }
 }
+
 //在指定区域内填充单个颜色
 //(sx,sy),(ex,ey):填充矩形对角坐标,区域大小为:(ex-sx+1)*(ey-sy+1)
 // color:要填充的颜色

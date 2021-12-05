@@ -61,7 +61,7 @@ extern u16 BACK_COLOR;  //������ɫ.Ĭ��Ϊ��ɫ
 extern u8 DFT_SCAN_DIR;
 
 //������ɫ
-#define WHITE 0xFFFF
+#define WHITE 0xffff
 #define BLACK 0x0000
 #define BLUE 0x001F
 #define BRED 0XF81F

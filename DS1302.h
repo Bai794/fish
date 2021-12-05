@@ -2,7 +2,7 @@
 #define __DS1302_H__
 
 #include "Arduino.h"
-
+#include <time.h>
 //DS1302 IO设置
 #define DS1302_RST 17     //实时时钟复位线引脚
 #define DS1302_IO 16      //实时时钟数据线引脚
@@ -41,6 +41,7 @@ typedef struct __SYSTEMTIME__
 }SYSTEMTIME;    //定义的时间类型
 
 
+tm *connectNTP();
 //函数或者变量声明
 extern void DS1302_InputByte(unsigned char dat);
 extern unsigned char DS1302_OutputByte(void) ;
@@ -52,7 +53,7 @@ extern void DS1302_GetTime(SYSTEMTIME *Time);//获取时间
 extern void DS1302_Init(void);
 extern void DS1302_ON_OFF(bool FLAG_ON_OFF);
 void Display_RTCC();
-void Set_Time(String &command);
+void Set_Time(tm *tt);
 extern SYSTEMTIME DS1302Buffer;
 extern bool Flag_Time_Refresh;
 

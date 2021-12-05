@@ -1,7 +1,7 @@
 /*
    @Author: HideMe
    @Date: 2021-10-31 22:04:43
- * @LastEditTime: 2021-12-05 15:50:42
+ * @LastEditTime: 2021-12-05 22:21:11
  * @LastEditors: your name
    @Description:
  * @FilePath: \fish\fish.ino
@@ -35,7 +35,8 @@ mystepper stepper2(step2, dir2);
 mystepper stepper3(step3, dir3);
 String comand, wificomand;
 AsyncWebServer server(80); //
-
+tm *tt;                    // ntp获取网络时间
+unsigned long time_flag = 0;
 float RedPh_value();
 void SmartConfig();
 bool AutoConfig();
@@ -56,25 +57,56 @@ void setup()
   ledcAttachPin(pwmb, moter2);
   LCD_Init();
   LCD_Init();
-  LCD_Clear(WHITE);
+  LCD_Clear(BLACK);
+  POINT_COLOR = WHITE;
   if (!AutoConfig())
   {
     SmartConfig();
   }
+
+  tt = connectNTP();
+  Serial.println(tt->tm_year);
+  Serial.println(tt->tm_mon);
+  Serial.println(tt->tm_mday);
+  Serial.println(tt->tm_hour);
+  Serial.println(tt->tm_min);
+  Serial.println(tt->tm_wday);
+
+  DS1302_Init();
+  delay(100);
+  Set_Time(tt);
+  String data = asctime(tt);
+  Serial.println(data);
+  LCD_ShowString(0, 0, 240, 16, 16, "fail received net time");
+
+  if (tt != NULL)
+  {
+    LCD_Fill(0, 0, 239, 16, BLACK);
+    LCD_ShowString(0, 0, 240, 16, 16, "Success received net time");
+  }
+  else
+  {
+    LCD_Fill(0, 0, 239, 16, BLACK);
+    LCD_ShowString(0, 0, 240, 16, 16, "fail received net time");
+  }
+  LCD_ShowString(0, 36, 240, 16, 16, "time:");
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(200, "text/plain", "ip +/update"); });
 
   AsyncElegantOTA.begin(&server); // Start ElegantOTA
   server.begin();
   Serial.println("HTTP server started");
-
-  DS1302_Init();
-  // Set_Time(mytime);
   Display_RTCC();
+  time_flag = millis();
 }
 void loop()
 {
-
+  if (millis() - time_flag > 1000)
+  {
+    time_flag = millis();
+    DS1302_GetTime(&DS1302Buffer);
+    tft_show();
+  }
   while (Serial.available())
   {
     comand += char(Serial.read());
@@ -94,7 +126,7 @@ void loop()
     char buffer[10];
     sprintf(buffer, "%0.2f", num);
     LCD_ShowString(30, 70, 200, 16, 16, buffer);
-    POINT_COLOR = RED;
+    POINT_COLOR = 0xffff;
     Draw_Circle(120, 120, 30);
   }
   uint8_t key_num = key_scan();
@@ -174,6 +206,10 @@ int key_scan()
 }
 void tft_show()
 {
+  char time_str[30];
+  sprintf(time_str, "%d-%d-%d-%d-%d week:%d", DS1302Buffer.Year + 2002, DS1302Buffer.Month,
+          DS1302Buffer.Day, DS1302Buffer.Hour, DS1302Buffer.Minute, DS1302Buffer.Week);
+  LCD_ShowString(44, 36, 240, 16, 16, (const char *)time_str);
 }
 bool AutoConfig()
 {
@@ -185,7 +221,7 @@ bool AutoConfig()
     int wstatus = WiFi.status();
     if (wstatus == WL_CONNECTED)
     {
-      LCD_Clear(WHITE);
+      LCD_Clear(BLACK);
       LCD_ShowString(0, 0, 240, 16, 16, "WIFI Success");
       String ip_str = "ssid:" + String(ssid) + "  IP:" + WiFi.localIP().toString();
       LCD_ShowString(0, 18, 240, 16, 16, ip_str.c_str()); //显示Ip
@@ -205,7 +241,7 @@ void SmartConfig()
 {
   WiFi.mode(WIFI_STA);
   WiFi.beginSmartConfig();
-  LCD_Clear(WHITE);
+  LCD_Clear(BLACK);
   LCD_ShowString(0, 0, 240, 16, 16, "wait for smartconfig..");
   while (1)
   {
@@ -213,7 +249,7 @@ void SmartConfig()
     delay(500);
     if (WiFi.smartConfigDone())
     {
-      LCD_Clear(WHITE);
+      LCD_Clear(BLACK);
       LCD_ShowString(0, 0, 240, 16, 16, "Smartconfig WIFI Success");
       String ip_str = "ssid:" + WiFi.SSID() + " IP:" + WiFi.localIP().toString();
       LCD_ShowString(0, 18, 240, 16, 16, ip_str.c_str()); //显示Ip
