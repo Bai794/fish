@@ -10,6 +10,6 @@
         "regex": "cpp",
         "functional": "cpp"
     },
-    "EIDE.SerialPortMonitor.BaudRate": 9600,
+    "EIDE.SerialPortMonitor.BaudRate": 115200,
     "commentTranslate.targetLanguage": "en"
 }

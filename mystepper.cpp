@@ -7,6 +7,7 @@
  * @FilePath: \fish\mystepper.cpp
  * @e-mail: 1269724114@qq.com
  */
+ //100圈 50ml 22.4   10: 27  20:31.3 30
 #include "mystepper.h"
 mystepper::mystepper(int StepPin, int DirPin)
 {
@@ -14,7 +15,7 @@ mystepper::mystepper(int StepPin, int DirPin)
     dirPin = DirPin;
     pinMode(stepPin, OUTPUT);
     pinMode(DirPin, OUTPUT);
-    speed = 50;
+    speed =100;
     stepperStepPosition = 0;
     stepperStepTargetPosition = 0;
 }
