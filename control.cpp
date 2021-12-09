@@ -1,133 +1,162 @@
-/*** 
- * @Author: HideMe
- * @Date: 2021-11-28 21:04:32
- * @LastEditTime: 2021-11-30 18:36:06
- * @LastEditors: your name
- * @Description: 
- * @FilePath: \fish\control.cpp
- * @e-mail: 1269724114@qq.com
- */
+/***
+   @Author: HideMe
+   @Date: 2021-11-28 21:04:32
+   @LastEditTime: 2021-12-08 19:31:28
+   @LastEditors: your name
+   @Description:
+   @FilePath: \fish\control.cpp
+   @e-mail: 1269724114@qq.com
+*/
+#pragma once
 #include "control.h"
 #include <Arduino.h>
 #include "pid.h"
-#include "mystepper.h"
-
+#include "mytft.h"
+#include "DS1302.h"
+#include "pin.h"
 #define wash_step 1
 #define xi_HCL_step 2
 #define xi_NAhco3_step 3
 
-extern mystepper mystepper1, mystepper2, mystepper3;
-float run_Scale = 0.2f;         //½øµç»úÓëÈÝÒ¹ºÁÉýµÄÏßÐÔ¹ØÏµ
-uint8_t times = 3, wash_v = 30; // times ±íÊ¾³õ´ÎÏ´±­×ÓµÄ´ÎÊý ,wah_num ±íÊ¾³öµÄË®¶àÉÙ
-float user_tagart = 8.0f;       // ÓÃ»§Éè¶¨µÄÓã³ØÀïË®nahco3Å¨¶È
-float user_Nahco3 = 10.0f;      //µÚÒ»´ÎÓÃ»§¼ÓµÄnahco3µÄÁ¿
+extern SYSTEMTIME DS1302Buffer;
+
+
+float run_Scale = 0.5f;         //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¹ï¿½Ïµ
+uint8_t times = 3, wash_v = 30; // times ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ï¿½ï¿½ÓµÄ´ï¿½ï¿½ï¿½ ,wah_num ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½Ë®ï¿½ï¿½ï¿½ï¿½
+float user_tagart = 8.0f;       // ï¿½Ã»ï¿½ï¿½è¶¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë®nahco3Å¨ï¿½ï¿½
+float user_Nahco3 = 100.0f;      //ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ã»ï¿½ï¿½Óµï¿½nahco3ï¿½ï¿½ï¿½ï¿½
 float set_ph = 4.5;
 extern void set_moterSpeed(int M, int speed);
 extern float RedPh_value();
 Mypid step;
 float buffer[10] = {0};
 
+mystepper stepper1(step1, dir1);
+mystepper stepper2(step2, dir2);
+mystepper stepper3(step3, dir3);
+
+void step_init() {
+  stepper1.setReductionRatio(1, 200 * 16); //
+  stepper2.setReductionRatio(1, 200 * 16);
+  stepper3.setReductionRatio(1, 200 * 16);
+}
 void Pid_init()
 {
-    step.pid_init(0.01, 0.001, 0.02, POSITION_PID, 1, 1);
+  step.pid_init(0.01, 0.001, 0.02, POSITION_PID, 1, 1);
 }
-/*** 
- * @description: È·¶¨²½½øµç»úÓëÈÝÒ¹ºÁÉýµÄÏßÐÔ¹ØÏµ£¬µ÷½Ú±ÈÀý±äÁ¿run_Scale
- * @function:    
- * @param {int} m  È·¶¨ÊÇÄÄÒ»¸öµç»ú
- * @param {float} ml  ÐèÒªÎüÈ¡µÄÈÝÒ¹
- * @return {*}
- */
+/***
+   @description: È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¹ï¿½Ïµï¿½ï¿½ï¿½ï¿½ï¿½Ú±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½run_Scale
+   @function:
+   @param {int} m  È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½
+   @param {float} ml  ï¿½ï¿½Òªï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ò¹
+   @return {*}
+*/
 
 void run_step(int m, float ml)
 {
-    float tagart_quan = ml / run_Scale;
-    if (m == 1)
-    {
-        mystepper1.stepnum_turns(tagart_quan);
-        mystepper1.update();
-    }
-    else if (m == 2)
-    {
-        mystepper2.stepnum_turns(tagart_quan);
-        mystepper2.update();
-    }
-    else if (m == 3)
-    {
-        mystepper3.stepnum_turns(tagart_quan);
-        mystepper3.update();
-    }
-    else
-        return;
+  float tagart_quan = ml / run_Scale;
+  if (m == 1)
+  {
+    stepper1.stepnum_turns(tagart_quan);
+    stepper1.update();
+  }
+  else if (m == 2)
+  {
+    stepper2.stepnum_turns(tagart_quan);
+    stepper2.update();
+  }
+  else if (m == 3)
+  {
+    stepper3.stepnum_turns(tagart_quan);
+    stepper3.update();
+  }
+  else
+    return;
 }
-/*** 
- * @description: Ï´ÉÕ±­µÄº¯Êý
- * @function:   Í¨¹ý·Ö±ðÐÞ¸Ätimes wash_num±äÁ¿À´È·¶¨ÉÕ±­Ï´¼¸´ÎºÍÃ¿´ÎÏ´ÉÕ±­Ë®µÄÈÝÁ¿
- * @param {*}
- * @return {*}
- */
+/***
+   @description: Ï´ï¿½Õ±ï¿½ï¿½Äºï¿½ï¿½ï¿½
+   @function:   Í¨ï¿½ï¿½ï¿½Ö±ï¿½ï¿½Þ¸ï¿½times wash_numï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È·ï¿½ï¿½ï¿½Õ±ï¿½Ï´ï¿½ï¿½ï¿½Îºï¿½Ã¿ï¿½ï¿½Ï´ï¿½Õ±ï¿½Ë®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   @param {*}
+   @return {*}
+*/
 void wash_Cup()
 {
 
-    for (int i = 0; i < times; i++)
-    {
-        run_step(wash_step, wash_v);
-        set_moterSpeed(1, 500); //½Á°è
-        delay(1000);
-        set_moterSpeed(1, 0);
-        delay(4000);
-    }
+  for (int i = 0; i < times; i++)
+  {
+    run_step(wash_step, wash_v);
+    set_moterSpeed(1, 500); //ï¿½ï¿½ï¿½ï¿½
+    delay(1000);
+    set_moterSpeed(1, 0);
+    delay(4000);
+  }
 }
 void add_nahco3(float user_Nahco3)
 {
-    run_step(xi_NAhco3_step, user_Nahco3);
+  run_step(xi_NAhco3_step, user_Nahco3);
 }
-/*** 
- * @description: ¸Äº¯ÊýÓÃÓÚ¶ÔÉÕ±­ÀïµÄÑÎËá´ïµ½ph4.5¿ØÖÆº¯Êý ·µ»ØËùnahco3µÄÅ¨¶È
- * @function: 
- * @param {*}
- * @return {*}
- */
+/***
+   @description: ï¿½Äºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½Õ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ïµ½ph4.5ï¿½ï¿½ï¿½Æºï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½nahco3ï¿½ï¿½Å¨ï¿½ï¿½
+   @function:
+   @param {*}
+   @return {*}
+*/
 float control_ph(float tagart_ph)
 {
-    float v = 0.0f, get, sum = 0, times = 0;
-    while (1)
+  float v = 0.0f, get, sum = 0, times = 0;
+  while (1)
+  {
+    get = RedPh_value();
+    float num = step.pid_calc(get, tagart_ph);
+    sum += num;
+    run_step(xi_HCL_step, num);
+    if (fabs(step.err[NOW]) < 0.05)
     {
-        get = RedPh_value();
-        float num = step.pid_calc(get, tagart_ph);
-        sum += num;
-        run_step(xi_HCL_step, num);
-        if (fabs(step.err[NOW]) < 0.05)
-        {
-            times++;
-            if (times >= 5)
-                break;
-        }
+      times++;
+      if (times >= 5)
+        break;
     }
-    return sum; //·µ»ØËùÓÃµÄÌå»ý
+  }
+  return sum; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½
 }
 
 void chou_water(int speed, float v)
 {
-    set_moterSpeed(1, speed);
-    delay((int)(v / speed));
-    set_moterSpeed(1, 0);
+  set_moterSpeed(1, speed);
+  delay((int)(v / speed));
+  set_moterSpeed(1, 0);
 }
-/*** 
- * @description: Ö´ÐÐÒ»´Î²âÁ¿µÄº¯Êý
- * @function: 
- * @param {*}
- * @return {*}
- */
+/***
+   @description: Ö´ï¿½ï¿½Ò»ï¿½Î²ï¿½ï¿½ï¿½ï¿½Äºï¿½ï¿½ï¿½
+   @function:
+   @param {*}
+   @return {*}
+*/
 void one_action()
 {
-    wash_Cup();
-    float one_hcl = control_ph(set_ph);
-    chou_water(600, 300); //600µÄËÙ¶ÈÅÅ³ý 300mlÀïÃæÉÕ±­µÄÈÝÒ¹
-    add_nahco3(user_Nahco3);
-    float two_hcl = control_ph(set_ph);
-    float multiple = (user_tagart - two_hcl) / (two_hcl - one_hcl);
-    add_nahco3(user_Nahco3 * multiple);
-    add_nahco3(user_Nahco3 * multiple);
-    
+  wash_Cup();
+  float one_hcl = control_ph(set_ph);
+  chou_water(600, 300); // 600ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½Å³ï¿½ 300mlï¿½ï¿½ï¿½ï¿½ï¿½Õ±ï¿½ï¿½ï¿½ï¿½ï¿½Ò¹
+  add_nahco3(user_Nahco3);
+  float two_hcl = control_ph(set_ph);
+  float multiple = (user_tagart - two_hcl) / (two_hcl - one_hcl);
+  add_nahco3(user_Nahco3 * multiple);
+  add_nahco3(user_Nahco3 * multiple);
+}
+void tft_show()
+{
+  char time_str[30];
+  sprintf(time_str, "%d-%d-%d-%d:%d week:%d", DS1302Buffer.Year + 2002, DS1302Buffer.Month,
+          DS1302Buffer.Day, DS1302Buffer.Hour, DS1302Buffer.Minute, DS1302Buffer.Week);
+  LCD_ShowString(44, 36, 240, 16, 16, (const char *)time_str);
+}
+void tft_satrt()
+{
+  LCD_ShowString(0, 54, 240, 16, 16, "PH:");
+  LCD_ShowString(100, 54, 240, 16, 16, "tagart:");
+  LCD_ShowString(160, 54, 240, 16, 16, String(user_tagart).c_str());
+  LCD_ShowString(0, 72, 240, 16, 16, "F_NA:");
+  LCD_ShowString(50, 72, 240, 16, 16, String(user_Nahco3).c_str());
+  LCD_ShowString(100, 72, 240, 16, 16, "scale:");
+  LCD_ShowString(160, 72, 240, 16, 16, String(run_Scale).c_str());
 }

@@ -26,7 +26,6 @@ public:
     ~mystepper();
     void update();
     void setReductionRatio(float gearRatio, int stepsPerRev);
-    void stepnum_turns(float quan_num); //ÉèÖÃ×ª¶àÉÙÈ¦
+    void stepnum_turns(float quan_num); //ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½È¦
 };
-
 #endif

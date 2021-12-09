@@ -1,7 +1,7 @@
 /*
    @Author: HideMe
    @Date: 2021-10-31 22:04:43
- * @LastEditTime: 2021-12-05 22:21:11
+ * @LastEditTime: 2021-12-09 18:28:30
  * @LastEditors: your name
    @Description:
  * @FilePath: \fish\fish.ino
@@ -29,26 +29,23 @@ const char *password = "123456bai"; //
 int freq_PWM = 50;
 int resolution_PWM = 10;
 
-extern SYSTEMTIME DS1302Buffer; //
-mystepper stepper1(step1, dir1);
-mystepper stepper2(step2, dir2);
-mystepper stepper3(step3, dir3);
 String comand, wificomand;
 AsyncWebServer server(80); //
-tm *tt;                    // ntp获取网络时间
+tm *tt;                    // ntp鑾峰彇缃戠粶鏃堕棿
 unsigned long time_flag = 0;
 float RedPh_value();
 void SmartConfig();
 bool AutoConfig();
-String mytime = "set 21 11 27 6 19 32"; // To Set The Time As 2008-8-8 Monday 12:00
-float num = 0, num1 = 0;
+void handle_key(int key_num);
+extern float user_tagart, user_Nahco3, set_ph, run_Scale ; // 鐢ㄦ埛璁惧畾鐨勯奔姹犻噷姘磏ahco3娴撳害
+String mytime = "set 21 11 27 6 19 32";        // To Set The Time As 2008-8-8 Monday 12:00
+
+
 void setup()
 {
 
   Serial.begin(115200);                    //
-  stepper1.setReductionRatio(1, 200 * 16); //
-  stepper2.setReductionRatio(1, 200 * 16);
-  stepper3.setReductionRatio(1, 200 * 16);
+  step_init();
   Pin_init(); //
   LCD_Init();
   ledcSetup(moter1, freq_PWM, resolution_PWM);
@@ -58,27 +55,21 @@ void setup()
   LCD_Init();
   LCD_Init();
   LCD_Clear(BLACK);
+  DS1302_Init();
   POINT_COLOR = WHITE;
   if (!AutoConfig())
   {
     SmartConfig();
   }
-
-  tt = connectNTP();
-  Serial.println(tt->tm_year);
-  Serial.println(tt->tm_mon);
-  Serial.println(tt->tm_mday);
-  Serial.println(tt->tm_hour);
-  Serial.println(tt->tm_min);
-  Serial.println(tt->tm_wday);
-
-  DS1302_Init();
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    tt = connectNTP();
+    Set_Time(tt);
+    String data = asctime(tt);
+    Serial.println(data);
+  }
   delay(100);
-  Set_Time(tt);
-  String data = asctime(tt);
-  Serial.println(data);
   LCD_ShowString(0, 0, 240, 16, 16, "fail received net time");
-
   if (tt != NULL)
   {
     LCD_Fill(0, 0, 239, 16, BLACK);
@@ -90,13 +81,21 @@ void setup()
     LCD_ShowString(0, 0, 240, 16, 16, "fail received net time");
   }
   LCD_ShowString(0, 36, 240, 16, 16, "time:");
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(200, "text/plain", "ip +/update"); });
-
-  AsyncElegantOTA.begin(&server); // Start ElegantOTA
-  server.begin();
-  Serial.println("HTTP server started");
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest * request)
+    {
+      request->send(200, "text/plain", "ip +/update");
+    });
+    AsyncElegantOTA.begin(&server); // Start ElegantOTA
+    Serial.println("HTTP server started");
+    server.begin();
+  }
+  else {
+    LCD_ShowString(0, 18, 240, 16, 16, "WIFI failed");
+  }
   Display_RTCC();
+  tft_satrt();
   time_flag = millis();
 }
 void loop()
@@ -114,31 +113,23 @@ void loop()
   }
   if (comand.length() > 0)
   {
-    num = comand.toFloat();
+    float num = comand.toFloat();
     comand = "";
     Serial.println(num);
-    stepper2.stepnum_turns(num);
-    stepper2.update();
+    run_step(2, num);
   }
   //  AsyncElegantOTA.loop();
-  if (num1 != num)
-  {
-    char buffer[10];
-    sprintf(buffer, "%0.2f", num);
-    LCD_ShowString(30, 70, 200, 16, 16, buffer);
-    POINT_COLOR = 0xffff;
-    Draw_Circle(120, 120, 30);
-  }
   uint8_t key_num = key_scan();
   if (key_num)
   {
+    handle_key(key_num);
     char buffer2[10];
     sprintf(buffer2, "key:%d", key_num);
     LCD_ShowString(30, 120, 240, 16, 16, buffer2);
   }
 }
 /**
-   @description: ��ȡPHֵ
+   @description: 锟斤拷取PH值
    @function:
    @param {*}
    @return {*}
@@ -197,25 +188,22 @@ int key_scan()
   {
     if (digitalRead(a[i]) == 0)
     {
-      return i + 1;
+      delay(100);
+      if (digitalRead(a[i]) == 0)
+        return i + 1;
+      else continue;
     }
     else
       continue;
   }
   return 0;
 }
-void tft_show()
-{
-  char time_str[30];
-  sprintf(time_str, "%d-%d-%d-%d-%d week:%d", DS1302Buffer.Year + 2002, DS1302Buffer.Month,
-          DS1302Buffer.Day, DS1302Buffer.Hour, DS1302Buffer.Minute, DS1302Buffer.Week);
-  LCD_ShowString(44, 36, 240, 16, 16, (const char *)time_str);
-}
+
 bool AutoConfig()
 {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-  //如果觉得时间太长可改
+  //濡傛灉瑙夊緱鏃堕棿澶暱鍙敼
   for (int i = 0; i < 10; i++)
   {
     int wstatus = WiFi.status();
@@ -224,7 +212,7 @@ bool AutoConfig()
       LCD_Clear(BLACK);
       LCD_ShowString(0, 0, 240, 16, 16, "WIFI Success");
       String ip_str = "ssid:" + String(ssid) + "  IP:" + WiFi.localIP().toString();
-      LCD_ShowString(0, 18, 240, 16, 16, ip_str.c_str()); //显示Ip
+      LCD_ShowString(0, 18, 240, 16, 16, ip_str.c_str()); //鏄剧ずIp
       return true;
     }
     else
@@ -243,7 +231,7 @@ void SmartConfig()
   WiFi.beginSmartConfig();
   LCD_Clear(BLACK);
   LCD_ShowString(0, 0, 240, 16, 16, "wait for smartconfig..");
-  while (1)
+  for (int i = 0; i < 20; i++)
   {
     Serial.print(".");
     delay(500);
@@ -252,8 +240,43 @@ void SmartConfig()
       LCD_Clear(BLACK);
       LCD_ShowString(0, 0, 240, 16, 16, "Smartconfig WIFI Success");
       String ip_str = "ssid:" + WiFi.SSID() + " IP:" + WiFi.localIP().toString();
-      LCD_ShowString(0, 18, 240, 16, 16, ip_str.c_str()); //显示Ip
+      LCD_ShowString(0, 18, 240, 16, 16, ip_str.c_str()); //鏄剧ずIp
       break;
     }
   }
+}
+void handle_key(int key_num)
+{
+  if (key_num == 1)
+  {
+    user_tagart += 0.1;
+    LCD_ShowString(160, 54, 240, 16, 16, String(user_tagart).c_str());
+  }
+  else if (key_num == 5)
+  {
+    user_tagart -= 0.1;
+    LCD_ShowString(160, 54, 240, 16, 16, String(user_tagart).c_str());
+  }
+  else if (key_num == 3)
+  {
+    user_Nahco3 += 10;
+    LCD_ShowString(50, 72, 240, 16, 16, String(user_Nahco3).c_str());
+  }
+  else if (key_num == 4)
+  {
+    user_Nahco3 -= 10;
+    LCD_ShowString(50, 72, 240, 16, 16, String(user_Nahco3).c_str());
+  }
+  else if (key_num == 6)
+  {
+    run_Scale += 0.01;
+    LCD_ShowString(160, 72, 240, 16, 16, String(run_Scale).c_str());
+  }
+  else if (key_num == 2)
+  {
+    run_Scale -= 0.01;
+    LCD_ShowString(160, 72, 240, 16, 16, String(run_Scale).c_str());
+  }
+  else
+    return;
 }
