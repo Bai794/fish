@@ -7,8 +7,10 @@
  * @FilePath: \fish\mystepper.cpp
  * @e-mail: 1269724114@qq.com
  */
- //100圈 50ml 22.4   10: 27  20:31.3 30
+ //100閸︼拷 50ml 22.4   10: 27  20:31.3 30
 #include "mystepper.h"
+#include "pin.h"
+
 mystepper::mystepper(int StepPin, int DirPin)
 {
     stepPin = StepPin;
@@ -43,7 +45,7 @@ void mystepper::update()
     stepperStepPosition=0;
 
 }
-void mystepper::setReductionRatio(float gearRatio, int stepsPerRev) //��һ�������Ǽ��ٱ�  �ڶ����Ƕ�������תһȦ
+void mystepper::setReductionRatio(float gearRatio, int stepsPerRev) //閿熸枻鎷蜂竴閿熸枻鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓瑙掔》鎷烽敓鍔唻鎷�  閿熻妭璁规嫹閿熸枻鎷烽敓瑙掕鎷烽敓鏂ゆ嫹閿熸枻鎷烽敓鏂ゆ嫹杞竴鍦�
 {
     radToStepFactor = gearRatio * stepsPerRev;
 }
