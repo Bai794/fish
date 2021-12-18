@@ -20,11 +20,10 @@
 
 extern SYSTEMTIME DS1302Buffer;
 
-
-float run_Scale = 0.5f;         //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¹ï¿½Ï?
-uint8_t times = 3, wash_v = 30; // times ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ï¿½ï¿½ÓµÄ´ï¿½ï¿½ï¿½ ,wah_num ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½Ë®ï¿½ï¿½ï¿½ï¿½
-float user_tagart = 8.0f;       // ï¿½Ã»ï¿½ï¿½è¶¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë®nahco3Å¨ï¿½ï¿½
-float user_Nahco3 = 100.0f;      //ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ã»ï¿½ï¿½Óµï¿½nahco3ï¿½ï¿½ï¿½ï¿½
+float run_Scale = 0.5f;         //²½½øµç»úµÄÈ¦ÊýºÍÈÝÒ¹µÄ±ÈÀý
+uint8_t times = 3, wash_v = 30; // Ï´ÉÕ±­µÄ´ÎÊý ºÍÃ¿´ÎÏ´µÄÈÝÒ¹
+float user_tagart = 8.0f;       // ÓÃ»§Éè¶¨µÄË®ÀïµÄ nahco3µÄÅ¨¶È
+float user_Nahco3 = 100.0f;     //ÓÃ»§µÚÒ»´Înahco3¼ÓµÄÁ¿
 float set_ph = 4.5;
 extern void set_moterSpeed(int M, int speed);
 extern float RedPh_value();
@@ -35,7 +34,8 @@ mystepper stepper1(step1, dir1);
 mystepper stepper2(step2, dir2);
 mystepper stepper3(step3, dir3);
 
-void step_init() {
+void step_init()
+{
   stepper1.setReductionRatio(1, 200 * 16); //
   stepper2.setReductionRatio(1, 200 * 16);
   stepper3.setReductionRatio(1, 200 * 16);
@@ -96,7 +96,7 @@ void add_nahco3(float user_Nahco3)
   run_step(xi_NAhco3_step, user_Nahco3);
 }
 /***
-   @description: ï¿½Äºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¶ï¿½ï¿½Õ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ïµ½ph4.5ï¿½ï¿½ï¿½Æºï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½nahco3ï¿½ï¿½Å¨ï¿½ï¿½
+   @description: ¸Äº¯ÊýÊÇ·µ»Øhcl µÄÌå»ý
    @function:
    @param {*}
    @return {*}
@@ -117,7 +117,7 @@ float control_ph(float tagart_ph)
         break;
     }
   }
-  return sum; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿?
+  return sum; //·µ»ØhclµÄÌå»ý
 }
 
 void chou_water(int speed, float v)

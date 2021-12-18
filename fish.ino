@@ -1,7 +1,7 @@
 /*
    @Author: HideMe
    @Date: 2021-10-31 22:04:43
- * @LastEditTime: 2021-12-13 16:00:31
+ * @LastEditTime: 2021-12-18 13:52:32
  * @LastEditors: your name
    @Description:
  * @FilePath: \fish\fish.ino
@@ -31,20 +31,19 @@ int resolution_PWM = 10;
 
 String comand, wificomand;
 AsyncWebServer server(80); //
-tm *tt;                    // ntp鑾峰彇缃戠粶鏃堕棿
+tm *tt;                    // ntp网络调整时间
 unsigned long time_flag = 0;
 float RedPh_value();
 void SmartConfig();
 bool AutoConfig();
 void handle_key(int key_num);
-extern float user_tagart, user_Nahco3, set_ph, run_Scale ; // 鐢ㄦ埛璁惧畾鐨勯奔姹犻噷姘磏ahco3娴撳害
-String mytime = "set 21 11 27 6 19 32";        // To Set The Time As 2008-8-8 Monday 12:00
-
+extern float user_tagart, user_Nahco3, set_ph, run_Scale; // 
+String mytime = "set 21 11 27 6 19 32";                   // To Set The Time As 2008-8-8 Monday 12:00
 
 void setup()
 {
 
-  Serial.begin(115200);                    //
+  Serial.begin(115200); //
   step_init();
   Pin_init(); //
   LCD_Init();
@@ -83,15 +82,14 @@ void setup()
   LCD_ShowString(0, 36, 240, 16, 16, "time:");
   if (WiFi.status() == WL_CONNECTED)
   {
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest * request)
-    {
-      request->send(200, "text/plain", "ip +/update");
-    });
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send(200, "text/plain", "ip +/update"); });
     AsyncElegantOTA.begin(&server); // Start ElegantOTA
     Serial.println("HTTP server started");
     server.begin();
   }
-  else {
+  else
+  {
     LCD_ShowString(0, 18, 240, 16, 16, "WIFI failed");
   }
   Display_RTCC();
@@ -100,6 +98,7 @@ void setup()
 }
 void loop()
 {
+  //  AsyncElegantOTA.loop();
   if (millis() - time_flag > 1000)
   {
     time_flag = millis();
@@ -118,15 +117,16 @@ void loop()
     Serial.println(num);
     run_step(2, num);
   }
-  //  AsyncElegantOTA.loop();
   uint8_t key_num = key_scan();
   if (key_num)
   {
     handle_key(key_num);
     char buffer2[10];
     sprintf(buffer2, "key:%d", key_num);
-    LCD_ShowString(30, 120, 240, 16, 16, buffer2);
+    LCD_ShowString(0, 120, 240, 16, 16, buffer2);
   }
+  float ph_value = RedPh_value();
+  LCD_Showfloat(100, 120, 240, 16, 16, ph_value);
 }
 /**
    @description: 锟斤拷取PH值
@@ -164,7 +164,7 @@ float RedPh_value()
    @description:
    @function:
    @param {int} M
-   @param {int} speed
+   @param {int} speed 范围 是0-2^10
    @return {*}
 */
 void set_moterSpeed(int M, int speed)
@@ -191,7 +191,8 @@ int key_scan()
       delay(100);
       if (digitalRead(a[i]) == 0)
         return i + 1;
-      else continue;
+      else
+        continue;
     }
     else
       continue;
