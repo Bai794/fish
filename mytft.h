@@ -108,7 +108,7 @@ void LCD_ShowxNum(u16 x, u16 y, u32 num, u8 len, u8 size, u8 mode);             
 void LCD_ShowString(u16 x, u16 y, u16 width, u16 height, u8 size, const char *ptr); //��ʾһ���ַ���,12/16����
 void LCD_Set_Window(u16 sx, u16 sy, u16 width, u16 height);
 void IO_init(void);
-
+void LCD_Showfloat(u16 x, u16 y, u16 width, u16 height, u8 size, float num);
 void LCD_WR_REG(u8);
 void LCD_WR_DATA(u16);
 void LCD_WriteReg(u8 LCD_Reg, u16 LCD_RegValue);

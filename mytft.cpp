@@ -656,6 +656,12 @@ void LCD_ShowString(u16 x, u16 y, u16 width, u16 height, u8 size, const char *pt
   }
 }
 
+void LCD_Showfloat(u16 x, u16 y, u16 width, u16 height, u8 size, float num)
+{
+  char temp[10];
+  sprintf(temp,"%0.2f",num);
+  LCD_ShowString(x,y,width,height,size,temp);
+}
 //…Ë÷√¥∞ø⁄
 void LCD_Set_Window(u16 sx, u16 sy, u16 width, u16 height)
 {

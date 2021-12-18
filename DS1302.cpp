@@ -20,7 +20,7 @@ tm *connectNTP()
 { // if response from NTP was succesfull return *tm else return a nullpointer
   WiFi.hostByName(ntpServerName, timeServerIP);
   // Serial.println(timeServerIP);
-  //Serial.println("sending NTP packet...");
+  // Serial.println("sending NTP packet...");
   // set all bytes in the buffer to 0
   memset(packetBuffer, 0, NTP_PACKET_SIZE);
   // Initialize values needed to form NTP request
@@ -320,5 +320,5 @@ void Set_Time(tm *tt)
   DS1302_SetTime(DS1302_MINUTE, DS1302Buffer.Minute);
   DS1302_ON_OFF(1);
   Serial.println("Set Done");
-  //Display_RTCC();
+  // Display_RTCC();
 }
