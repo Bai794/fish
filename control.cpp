@@ -20,10 +20,10 @@
 
 extern SYSTEMTIME DS1302Buffer;
 
-float run_Scale = 0.5f;         //���������Ȧ������ҹ�ı���
-uint8_t times = 3, wash_v = 30; // ϴ�ձ��Ĵ��� ��ÿ��ϴ����ҹ
-float user_tagart = 8.0f;       // �û��趨��ˮ��� nahco3��Ũ��
-float user_Nahco3 = 100.0f;     //�û���һ��nahco3�ӵ���
+float run_Scale = 0.5f;         //步进电机的圈数和容夜的比例
+uint8_t times = 3, wash_v = 30; // 洗烧杯的次数 和每次洗的容夜
+float user_tagart = 8.0f;       // 用户设定的水里的 nahco3的浓度
+float user_Nahco3 = 100.0f;     //用户第一次nahco3加的量
 float set_ph = 4.5;
 extern void set_moterSpeed(int M, int speed);
 extern float RedPh_value();
@@ -45,10 +45,10 @@ void Pid_init()
   step.pid_init(0.01, 0.001, 0.02, POSITION_PID, 1, 1);
 }
 /***
-   @description: ȷ�������������ҹ���������Թ�ϵ�����ڱ�������run_Scale
+   @description: 确锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟揭癸拷锟斤拷锟斤拷锟斤拷锟斤拷怨锟较碉拷锟斤拷锟斤拷诒锟斤拷锟斤拷锟斤拷锟絩un_Scale
    @function:
-   @param {int} m  ȷ������һ�����?
-   @param {float} ml  ��Ҫ��ȡ����ҹ
+   @param {int} m  确锟斤拷锟斤拷锟斤拷一锟斤拷锟斤拷锟?
+   @param {float} ml  锟斤拷要锟斤拷取锟斤拷锟斤拷夜
    @return {*}
 */
 
@@ -74,8 +74,8 @@ void run_step(int m, float ml)
     return;
 }
 /***
-   @description: ϴ�ձ��ĺ���
-   @function:   ͨ���ֱ��޸�times wash_num������ȷ���ձ�ϴ���κ�ÿ��ϴ�ձ�ˮ������
+   @description: 洗锟秸憋拷锟侥猴拷锟斤拷
+   @function:   通锟斤拷锟街憋拷锟睫革拷times wash_num锟斤拷锟斤拷锟斤拷确锟斤拷锟秸憋拷洗锟斤拷锟轿猴拷每锟斤拷洗锟秸憋拷水锟斤拷锟斤拷锟斤拷
    @param {*}
    @return {*}
 */
@@ -85,7 +85,7 @@ void wash_Cup()
   for (int i = 0; i < times; i++)
   {
     run_step(wash_step, wash_v);
-    set_moterSpeed(1, 500); //����
+    set_moterSpeed(1, 500); //锟斤拷锟斤拷
     delay(1000);
     set_moterSpeed(1, 0);
     delay(4000);
@@ -96,7 +96,7 @@ void add_nahco3(float user_Nahco3)
   run_step(xi_NAhco3_step, user_Nahco3);
 }
 /***
-   @description: �ĺ����Ƿ���hcl �����
+   @description: 改函数是返回hcl 的体积
    @function:
    @param {*}
    @return {*}
@@ -117,7 +117,7 @@ float control_ph(float tagart_ph)
         break;
     }
   }
-  return sum; //����hcl�����
+  return sum; //返回hcl的体积
 }
 
 void chou_water(int speed, float v)
@@ -127,7 +127,7 @@ void chou_water(int speed, float v)
   set_moterSpeed(1, 0);
 }
 /***
-   @description: ִ��һ�β����ĺ���
+   @description:
    @function:
    @param {*}
    @return {*}
@@ -136,11 +136,10 @@ void one_action()
 {
   wash_Cup();
   float one_hcl = control_ph(set_ph);
-  chou_water(600, 300); // 600���ٶ��ų� 300ml�����ձ�����ҹ
+  chou_water(600, 300); //
   add_nahco3(user_Nahco3);
   float two_hcl = control_ph(set_ph);
   float multiple = (user_tagart - two_hcl) / (two_hcl - one_hcl);
-  add_nahco3(user_Nahco3 * multiple);
   add_nahco3(user_Nahco3 * multiple);
 }
 void tft_show()
@@ -152,10 +151,11 @@ void tft_show()
 }
 void tft_satrt()
 {
-  LCD_ShowString(0, 54, 240, 16, 16, "PH:");
+  LCD_ShowString(10, 54, 240, 16, 16, "PH:");
+  LCD_ShowString(40, 54, 240, 16, 16, String(set_ph).c_str());
   LCD_ShowString(100, 54, 240, 16, 16, "tagart:");
   LCD_ShowString(160, 54, 240, 16, 16, String(user_tagart).c_str());
-  LCD_ShowString(0, 72, 240, 16, 16, "F_NA:");
+  LCD_ShowString(10, 72, 240, 16, 16, "F_NA:");
   LCD_ShowString(50, 72, 240, 16, 16, String(user_Nahco3).c_str());
   LCD_ShowString(100, 72, 240, 16, 16, "scale:");
   LCD_ShowString(160, 72, 240, 16, 16, String(run_Scale).c_str());
