@@ -1,7 +1,7 @@
 /*
    @Author: HideMe
    @Date: 2021-10-31 22:04:43
- * @LastEditTime: 2021-12-18 13:52:32
+ * @LastEditTime: 2021-12-21 22:39:44
  * @LastEditors: your name
    @Description:
  * @FilePath: \fish\fish.ino
@@ -19,13 +19,14 @@
 #include "mytft.h"
 #include "pid.h"
 #include "control.h"
+#include "kongjian.h"
 
 const char *ssid = "bai";           //
 const char *password = "123456bai"; //
 
 #define moter1 3
 #define moter2 4
-#define Offset 0.00
+#define Offset 2.40
 int freq_PWM = 50;
 int resolution_PWM = 10;
 
@@ -36,9 +37,15 @@ unsigned long time_flag = 0;
 float RedPh_value();
 void SmartConfig();
 bool AutoConfig();
-void handle_key(int key_num);
-extern float user_tagart, user_Nahco3, set_ph, run_Scale; // 
+
+extern float user_tagart, user_Nahco3, set_ph, run_Scale; //
 String mytime = "set 21 11 27 6 19 32";                   // To Set The Time As 2008-8-8 Monday 12:00
+uint8_t flag = 0;
+
+void handle3_key(uint8_t key_num, uint8_t key_num2);
+bool handle_key(uint16_t key_num);
+void disply(uint8_t num);
+void handle_key2(uint8_t key);
 
 void setup()
 {
@@ -83,7 +90,7 @@ void setup()
   if (WiFi.status() == WL_CONNECTED)
   {
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send(200, "text/plain", "ip +/update"); });
+              { request->send(200, "text/plain", WiFi.localIP().toString() + "/update"); });
     AsyncElegantOTA.begin(&server); // Start ElegantOTA
     Serial.println("HTTP server started");
     server.begin();
@@ -120,16 +127,16 @@ void loop()
   uint8_t key_num = key_scan();
   if (key_num)
   {
-    handle_key(key_num);
     char buffer2[10];
     sprintf(buffer2, "key:%d", key_num);
     LCD_ShowString(0, 120, 240, 16, 16, buffer2);
+    handle_key2(key_num);
   }
-  float ph_value = RedPh_value();
-  LCD_Showfloat(100, 120, 240, 16, 16, ph_value);
+  // float ph_value = RedPh_value();
+  // LCD_Showfloat(100, 54, 240, 16, 16, ph_value);
 }
 /**
-   @description: 锟斤拷取PH值
+   @description: 返回ph
    @function:
    @param {*}
    @return {*}
@@ -204,7 +211,6 @@ bool AutoConfig()
 {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-  //濡傛灉瑙夊緱鏃堕棿澶暱鍙敼
   for (int i = 0; i < 10; i++)
   {
     int wstatus = WiFi.status();
@@ -241,43 +247,133 @@ void SmartConfig()
       LCD_Clear(BLACK);
       LCD_ShowString(0, 0, 240, 16, 16, "Smartconfig WIFI Success");
       String ip_str = "ssid:" + WiFi.SSID() + " IP:" + WiFi.localIP().toString();
-      LCD_ShowString(0, 18, 240, 16, 16, ip_str.c_str()); //鏄剧ずIp
+      LCD_ShowString(0, 18, 240, 16, 16, ip_str.c_str()); //
       break;
     }
   }
 }
-void handle_key(int key_num)
+void handle3_key(uint8_t key_num, uint8_t key_num2)
 {
-  if (key_num == 1)
+  if (key_num == 1 && key_num2 == 3)
+  {
+    set_ph += 0.05;
+    LCD_ShowString(40, 54, 240, 16, 16, String(set_ph).c_str());
+  }
+  else if (key_num == 1 && key_num2 == 6)
+  {
+    set_ph -= 0.05;
+    LCD_ShowString(40, 54, 240, 16, 16, String(set_ph).c_str());
+  }
+  else if (key_num == 2 && key_num2 == 3)
   {
     user_tagart += 0.1;
     LCD_ShowString(160, 54, 240, 16, 16, String(user_tagart).c_str());
   }
-  else if (key_num == 5)
+  else if (key_num == 2 && key_num2 == 6)
   {
     user_tagart -= 0.1;
     LCD_ShowString(160, 54, 240, 16, 16, String(user_tagart).c_str());
   }
-  else if (key_num == 3)
+  else if (key_num == 3 && key_num2 == 3)
   {
     user_Nahco3 += 10;
     LCD_ShowString(50, 72, 240, 16, 16, String(user_Nahco3).c_str());
   }
-  else if (key_num == 4)
+  else if (key_num == 3 && key_num2 == 6)
   {
     user_Nahco3 -= 10;
     LCD_ShowString(50, 72, 240, 16, 16, String(user_Nahco3).c_str());
   }
-  else if (key_num == 6)
+  else if (key_num == 4 && key_num2 == 3)
   {
     run_Scale += 0.01;
     LCD_ShowString(160, 72, 240, 16, 16, String(run_Scale).c_str());
   }
-  else if (key_num == 2)
+  else if (key_num == 4 && key_num2 == 6)
   {
     run_Scale -= 0.01;
     LCD_ShowString(160, 72, 240, 16, 16, String(run_Scale).c_str());
   }
-  else
-    return;
+  // else
+  // {
+  //   LCD_ShowString(0, 160, 240, 16, 16, "error! please + or -");
+  //   delay(1000);
+  //   LCD_Fill(0, 160, 240, 170, 0x0000);
+  // }
+}
+bool handle_key(uint16_t key_num)
+{
+  key_num = key_num % 5;
+  if (key_num == 0)
+    key_num = 1;
+  uint8_t key_add = 0;
+  while (key_add != 5)
+  {
+    uint8_t key_add = key_scan();
+    if (key_add == 5)
+      return true;
+    handle3_key(key_num, key_add);
+  }
+  return true;
+}
+void disply(uint8_t num)
+{
+  num = num % 5; //有4个
+  if (num == 1 || num == 0)
+  {
+    LCD_Fill(90, 53, 100, 69, 0x0000);
+    LCD_Fill(0, 72, 10, 88, 0x0000);
+    LCD_Fill(90, 72, 100, 88, 0x0000);
+    LCD_ShowString(0, 53, 10, 16, 16, ">");
+  }
+  else if (num == 2)
+  {
+    LCD_Fill(0, 53, 10, 69, 0x0000);
+    LCD_Fill(0, 72, 10, 88, 0x0000);
+    LCD_Fill(90, 72, 100, 88, 0x0000);
+    LCD_ShowString(90, 53, 10, 16, 16, ">");
+  }
+  else if (num == 3)
+  {
+    LCD_Fill(0, 53, 10, 69, 0x0000);
+    LCD_Fill(90, 53, 100, 69, 0x0000);
+    LCD_Fill(90, 72, 100, 88, 0x0000);
+    LCD_ShowString(0, 72, 10, 16, 16, ">");
+  }
+  else if (num == 4)
+  {
+    LCD_Fill(0, 53, 10, 69, 0x0000);
+    LCD_Fill(90, 53, 100, 69, 0x0000);
+    LCD_Fill(0, 72, 10, 88, 0x0000);
+    LCD_ShowString(90, 72, 10, 16, 16, ">");
+  }
+}
+void handle_key2(uint8_t key)
+{
+  uint8_t key1 = 0, num = 0;
+  bool flag_stop = false; // 按下按键2 就会变成true
+  if (key == 1)
+  {
+    while (key1 != 5)
+    {
+      key1 = key_scan();
+      if (key1 == 4)
+      {
+        num++;
+      }
+      else if (key1 == 2)
+      {
+        num--;
+      }
+      else if (key1 == 5)
+      {
+        return;
+      }
+      while (key1 == 1 && !flag_stop)
+      {
+        flag_stop = handle_key(num);
+      }
+      disply(num);
+    }
+  }
 }
