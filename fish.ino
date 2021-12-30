@@ -1,7 +1,7 @@
 /*
    @Author: HideMe
    @Date: 2021-10-31 22:04:43
- * @LastEditTime: 2021-12-21 22:39:44
+ * @LastEditTime: 2021-12-29 21:25:16
  * @LastEditors: your name
    @Description:
  * @FilePath: \fish\fish.ino
@@ -21,30 +21,37 @@
 #include "control.h"
 #include "kongjian.h"
 
-const char *ssid = "bai";           //
-const char *password = "123456bai"; //
+const char *ssid = "bai";           //wifi名称
+const char *password = "123456bai"; //wifi密码
 
 #define moter1 3
 #define moter2 4
-#define Offset 2.40
-int freq_PWM = 50;
-int resolution_PWM = 10;
+
+
+#define Offset 2.65//ph计的补偿值
+int freq_PWM = 50; //pwm的频率 50hz
+int resolution_PWM = 10;//代表pwm_value的值最大为2^10=1024
 
 String comand, wificomand;
-AsyncWebServer server(80); //
-tm *tt;                    // ntp网络调整时间
-unsigned long time_flag = 0;
-float RedPh_value();
-void SmartConfig();
-bool AutoConfig();
 
-extern float user_tagart, user_Nahco3, set_ph, run_Scale; //
+
+AsyncWebServer server(80); //用于实现ota的远程升级
+tm *tt;                    // ntp获取网络时间
+unsigned long time_flag = 0;
+
+float RedPh_value();//读取ph的函数
+void SmartConfig();//智能配网 通过扫描微信二维码来修改wifi的连接
+bool AutoConfig();//连接默认的wifi
+void set_moterSpeed(int M, int speed);//抽水直流电机的速度
+
+
+extern float user_tagart, user_Nahco3, set_ph, run_Scale; //分别是用户的nahco3的设定多少浓度,第一次加的nahco3的量 ,和步进电机圈数与体积的比例 
 String mytime = "set 21 11 27 6 19 32";                   // To Set The Time As 2008-8-8 Monday 12:00
 uint8_t flag = 0;
 
 void handle3_key(uint8_t key_num, uint8_t key_num2);
 bool handle_key(uint16_t key_num);
-void disply(uint8_t num);
+void disply(uint8_t num);//显示按键按下的数字
 void handle_key2(uint8_t key);
 
 void setup()
@@ -132,8 +139,8 @@ void loop()
     LCD_ShowString(0, 120, 240, 16, 16, buffer2);
     handle_key2(key_num);
   }
-  // float ph_value = RedPh_value();
-  // LCD_Showfloat(100, 54, 240, 16, 16, ph_value);
+  float ph_value = RedPh_value();
+  LCD_Showfloat(100, 200, 240, 16, 16, ph_value);
 }
 /**
    @description: 返回ph
@@ -354,6 +361,7 @@ void handle_key2(uint8_t key)
   bool flag_stop = false; // 按下按键2 就会变成true
   if (key == 1)
   {
+    delay(300);
     while (key1 != 5)
     {
       key1 = key_scan();
